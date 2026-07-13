@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Painel central do WhatsApp</title>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="brand-panel">
+      <div class="brand-icon">W</div>
+      <p class="eyebrow">CONTROLE CENTRAL</p>
+      <h1>WhatsApp dos seus sites</h1>
+      <p class="brand-copy">Altere o número e as mensagens sem precisar reenviar todos os sites para a Netlify.</p>
+      <div class="feature-list">
+        <span>Um número para todos os sites</span>
+        <span>Mensagem diferente por marca</span>
+        <span>Alteração sem novo deploy</span>
+      </div>
+    </section>
+
+    <section class="content-panel">
+      <div id="loadingView" class="state-card">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Verificando seu acesso...</p>
+      </div>
+
+      <div id="loginView" class="card hidden">
+        <p class="eyebrow">ÁREA RESTRITA</p>
+        <h2>Entrar no painel</h2>
+        <p class="muted">Use o e-mail e a senha cadastrados no Netlify Identity.</p>
+        <form id="loginForm" novalidate>
+          <label>
+            E-mail
+            <input id="email" type="email" autocomplete="username" required placeholder="seuemail@exemplo.com">
+          </label>
+          <label>
+            Senha
+            <input id="password" type="password" autocomplete="current-password" required minlength="8" placeholder="Sua senha">
+          </label>
+          <button id="loginButton" class="primary-button" type="submit">Entrar</button>
+        </form>
+        <p id="loginMessage" class="form-message" role="status"></p>
+      </div>
+
+      <div id="dashboardView" class="dashboard hidden">
+        <header class="dashboard-header">
+          <div>
+            <p class="eyebrow">PAINEL ATIVO</p>
+            <h2>Configuração do atendimento</h2>
+            <p id="userInfo" class="muted"></p>
+          </div>
+          <button id="logoutButton" class="secondary-button" type="button">Sair</button>
+        </header>
+
+        <form id="configForm" class="card config-card" novalidate>
+          <div class="section-heading">
+            <div>
+              <h3>Configuração principal</h3>
+              <p>Este número será usado por todos os sites conectados.</p>
+            </div>
+            <span id="saveStatus" class="status-pill">Aguardando</span>
+          </div>
+
+          <label>
+            Número do WhatsApp
+            <input id="whatsappNumber" inputmode="numeric" autocomplete="off" required placeholder="5511999999999">
+            <small>Digite 55 + DDD + número, usando somente números.</small>
+          </label>
+
+          <label>
+            Mensagem padrão
+            <textarea id="defaultMessage" rows="4" maxlength="500" required placeholder="Olá! Vim pelo site e gostaria de mais informações."></textarea>
+            <small>Será usada quando o site não possuir uma mensagem própria.</small>
+          </label>
+
+          <div class="sites-heading">
+            <div>
+              <h3>Mensagens por site</h3>
+              <p>Cada site pode enviar uma frase diferente para o mesmo número.</p>
+            </div>
+            <button id="addSiteButton" class="secondary-button" type="button">Adicionar site</button>
+          </div>
+
+          <div id="sitesList" class="sites-list"></div>
+
+          <div class="form-actions">
+            <p id="configMessage" class="form-message" role="status"></p>
+            <button id="saveButton" class="primary-button" type="submit">Salvar alterações</button>
+          </div>
+        </form>
+
+        <section class="card help-card">
+          <h3>Como conectar um site</h3>
+          <p>Adicione o script abaixo antes de <code>&lt;/body&gt;</code>, trocando o endereço pelo domínio deste painel:</p>
+          <pre><code id="integrationCode"></code></pre>
+          <p class="muted">No PlaySim, o identificador usado será <strong>playsim</strong>.</p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/src/admin.js"></script>
+</body>
+</html>
