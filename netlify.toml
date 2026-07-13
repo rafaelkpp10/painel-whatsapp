@@ -20,3 +20,17 @@
   [headers.values]
     Cache-Control = "public, max-age=300"
     X-Content-Type-Options = "nosniff"
+
+# Rotas públicas do painel para as Netlify Functions.
+# O status 200 faz uma reescrita interna, mantendo /api/... no navegador.
+[[redirects]]
+  from = "/api/admin/whatsapp"
+  to = "/.netlify/functions/admin-whatsapp"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/whatsapp"
+  to = "/.netlify/functions/whatsapp"
+  status = 200
+  force = true

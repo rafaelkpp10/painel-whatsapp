@@ -32,7 +32,3 @@ export default async (request) => {
     updatedAt: config.updatedAt
   });
 };
-
-export const config = {
-  path: "/api/whatsapp"
-};

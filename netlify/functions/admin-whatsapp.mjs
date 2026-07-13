@@ -33,7 +33,3 @@ export default async (request) => {
 
   return new Response(null, { status: 405, headers: { Allow: "GET, PUT, POST" } });
 };
-
-export const config = {
-  path: "/api/admin/whatsapp"
-};
