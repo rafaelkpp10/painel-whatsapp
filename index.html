@@ -3,10 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="0; url=/admin/">
+  <meta name="robots" content="noindex,nofollow">
   <title>Painel WhatsApp</title>
 </head>
 <body>
-  <p><a href="/admin/">Abrir painel de WhatsApp</a></p>
+  <p>Redirecionando para o painel...</p>
+  <script>
+    /*
+      Os links enviados pelo Netlify Identity possuem um código após o símbolo #.
+      O redirecionamento abaixo preserva esse código para que o painel consiga
+      abrir a tela de criação ou redefinição de senha.
+    */
+    window.location.replace("/admin/" + window.location.search + window.location.hash);
+  </script>
+  <noscript>
+    <p>Ative o JavaScript e abra novamente o link recebido por e-mail.</p>
+  </noscript>
 </body>
 </html>

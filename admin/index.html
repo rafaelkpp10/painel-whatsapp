@@ -26,6 +26,52 @@
         <p>Verificando seu acesso...</p>
       </div>
 
+
+      <div id="passwordView" class="card hidden">
+        <p id="passwordEyebrow" class="eyebrow">ATIVAR ACESSO</p>
+        <h2 id="passwordTitle">Crie sua senha</h2>
+        <p id="passwordDescription" class="muted">
+          Defina a senha que será usada para entrar no painel.
+        </p>
+
+        <form id="passwordForm" novalidate>
+          <label>
+            Nova senha
+            <input
+              id="newPassword"
+              type="password"
+              autocomplete="new-password"
+              required
+              minlength="8"
+              placeholder="Mínimo de 8 caracteres"
+            >
+          </label>
+
+          <label>
+            Confirmar nova senha
+            <input
+              id="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              required
+              minlength="8"
+              placeholder="Digite a senha novamente"
+            >
+          </label>
+
+          <button
+            id="passwordButton"
+            class="primary-button"
+            type="submit"
+            style="width:100%; margin-top:24px;"
+          >
+            Criar senha e entrar
+          </button>
+        </form>
+
+        <p id="passwordMessage" class="form-message" role="status"></p>
+      </div>
+
       <div id="loginView" class="card hidden">
         <p class="eyebrow">ÁREA RESTRITA</p>
         <h2>Entrar no painel</h2>
