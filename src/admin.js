@@ -24,6 +24,8 @@ const loginMessage = $("#loginMessage");
 const passwordMessage = $("#passwordMessage");
 const configMessage = $("#configMessage");
 const saveStatus = $("#saveStatus");
+const statsList = $("#statsList");
+const statsMessage = $("#statsMessage");
 
 let pendingAuthAction = null;
 let pendingInviteToken = "";
@@ -166,6 +168,133 @@ async function loadConfig() {
   fillForm(await response.json());
 }
 
+
+function formatDateTime(value) {
+  if (!value) return "Nenhum clique nos últimos 7 dias";
+
+  return new Date(value).toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short"
+  });
+}
+
+function createStatsCard(site) {
+  const card = document.createElement("article");
+  card.className = "site-stat-card";
+
+  const header = document.createElement("div");
+  header.className = "site-stat-header";
+
+  const identity = document.createElement("div");
+  const title = document.createElement("strong");
+  title.textContent = site.name || site.id;
+
+  const id = document.createElement("code");
+  id.textContent = site.id;
+
+  identity.append(title, id);
+
+  const testLink = document.createElement("a");
+  testLink.className = "test-link";
+  testLink.href =
+    `/zap/${encodeURIComponent(site.id)}?test=1`;
+  testLink.target = "_blank";
+  testLink.rel = "noopener noreferrer";
+  testLink.textContent = "Testar botão";
+
+  header.append(identity, testLink);
+
+  const numbers = document.createElement("div");
+  numbers.className = "site-stat-numbers";
+
+  const today = document.createElement("span");
+  today.innerHTML =
+    `<small>Hoje</small><strong>${Number(site.today || 0)}</strong>`;
+
+  const period = document.createElement("span");
+  period.innerHTML =
+    `<small>7 dias</small><strong>${Number(site.period || 0)}</strong>`;
+
+  numbers.append(today, period);
+
+  const last = document.createElement("p");
+  last.className = "site-last-click";
+  last.textContent =
+    `Último clique: ${formatDateTime(site.lastClickAt)}`;
+
+  card.append(header, numbers, last);
+  return card;
+}
+
+function renderStats(stats) {
+  $("#todayClicks").textContent =
+    String(stats?.totals?.today || 0);
+  $("#periodClicks").textContent =
+    String(stats?.totals?.period || 0);
+  $("#registeredSites").textContent =
+    String(stats?.sites?.length || 0);
+
+  statsList.replaceChildren();
+
+  const sites = Array.isArray(stats?.sites)
+    ? stats.sites
+    : [];
+
+  if (!sites.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "Nenhum site cadastrado.";
+    statsList.append(empty);
+    return;
+  }
+
+  sites.forEach((site) => {
+    statsList.append(createStatsCard(site));
+  });
+}
+
+async function loadStats() {
+  const button = $("#refreshStatsButton");
+  button.disabled = true;
+  button.textContent = "Atualizando...";
+  setMessage(statsMessage);
+
+  try {
+    const response = await fetch("/api/admin/stats?days=7", {
+      cache: "no-store"
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (response.status === 401) {
+      throw new Error("Sua sessão expirou. Entre novamente.");
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        result.error || "Não foi possível carregar os cliques."
+      );
+    }
+
+    renderStats(result);
+    setMessage(
+      statsMessage,
+      `Atualizado às ${new Date(result.generatedAt).toLocaleTimeString("pt-BR")}.`,
+      true
+    );
+  } catch (error) {
+    setMessage(
+      statsMessage,
+      error.message || "Erro ao carregar os cliques."
+    );
+  } finally {
+    button.disabled = false;
+    button.textContent = "Atualizar cliques";
+  }
+}
+
+$("#refreshStatsButton").addEventListener("click", loadStats);
+
 function openPasswordView(action) {
   pendingAuthAction = action;
   setMessage(passwordMessage);
@@ -301,6 +430,7 @@ configForm.addEventListener("submit", async (event) => {
 
     fillForm(result);
     setMessage(configMessage, "Alterações salvas com sucesso.", true);
+    await loadStats();
   } catch (error) {
     setMessage(
       configMessage,
@@ -358,6 +488,7 @@ async function initialize() {
 
     show(dashboardView);
     await loadConfig();
+    await loadStats();
   } catch (error) {
     show(loginView);
     setMessage(

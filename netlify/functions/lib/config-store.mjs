@@ -47,7 +47,7 @@ export function sanitizeConfig(input, userEmail) {
     throw new Error("A mensagem padrão deve ter entre 1 e 500 caracteres.");
   }
 
-  const rawSites = Array.isArray(input?.sites) ? input.sites.slice(0, 50) : [];
+  const rawSites = Array.isArray(input?.sites) ? input.sites.slice(0, 500) : [];
   const seen = new Set();
   const sites = rawSites.map((site) => {
     const id = String(site?.id || "").trim().toLowerCase();

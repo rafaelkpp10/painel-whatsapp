@@ -100,6 +100,40 @@
           <button id="logoutButton" class="secondary-button" type="button">Sair</button>
         </header>
 
+
+        <section class="card stats-card">
+          <div class="stats-heading">
+            <div>
+              <p class="eyebrow">DIAGNÓSTICO</p>
+              <h3>Cliques nos botões do WhatsApp</h3>
+              <p>
+                Aqui você confirma se as pessoas estão clicando antes de chegar ao WhatsApp.
+              </p>
+            </div>
+            <button id="refreshStatsButton" class="secondary-button" type="button">
+              Atualizar cliques
+            </button>
+          </div>
+
+          <div class="stats-summary">
+            <article>
+              <span>Cliques hoje</span>
+              <strong id="todayClicks">0</strong>
+            </article>
+            <article>
+              <span>Últimos 7 dias</span>
+              <strong id="periodClicks">0</strong>
+            </article>
+            <article>
+              <span>Sites cadastrados</span>
+              <strong id="registeredSites">0</strong>
+            </article>
+          </div>
+
+          <p id="statsMessage" class="form-message" role="status"></p>
+          <div id="statsList" class="stats-list"></div>
+        </section>
+
         <form id="configForm" class="card config-card" novalidate>
           <div class="section-heading">
             <div>
@@ -138,10 +172,16 @@
         </form>
 
         <section class="card help-card">
-          <h3>Como conectar um site</h3>
-          <p>Adicione o script abaixo antes de <code>&lt;/body&gt;</code>, trocando o endereço pelo domínio deste painel:</p>
+          <h3>Instalação nos sites</h3>
+          <p>
+            Os sites que já possuem este script <strong>não precisam ser alterados novamente</strong>.
+            O arquivo central agora troca os links para um redirecionamento seguro no momento do carregamento.
+          </p>
           <pre><code id="integrationCode"></code></pre>
-          <p class="muted">No PlaySim, o identificador usado será <strong>playsim</strong>.</p>
+          <p class="muted">
+            Em sites novos, altere somente o valor de <strong>data-site</strong>.
+            O link antigo que já existe no botão permanece como segurança caso o JavaScript não carregue.
+          </p>
         </section>
       </div>
     </section>

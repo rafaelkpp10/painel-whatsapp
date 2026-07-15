@@ -81,3 +81,32 @@ code { font-family: "SFMono-Regular", Consolas, monospace; }
   .site-row .danger-button { width: 100%; }
   .form-actions .primary-button { width: 100%; }
 }
+
+.stats-card { width: 100%; margin-bottom: 22px; }
+.stats-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.stats-heading .eyebrow { margin-top: 0; }
+.stats-heading p { color: #9299a8; margin-bottom: 0; }
+.stats-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+.stats-summary article { padding: 18px; border-radius: 16px; background: #0b0e16; border: 1px solid rgba(255,255,255,.07); }
+.stats-summary span { display: block; color: #9299a8; font-size: 13px; }
+.stats-summary strong { display: block; margin-top: 6px; font-size: 30px; }
+.stats-list { display: grid; gap: 12px; margin-top: 18px; max-height: 520px; overflow: auto; padding-right: 4px; }
+.site-stat-card { padding: 16px; border-radius: 16px; background: #0b0e16; border: 1px solid rgba(255,255,255,.07); }
+.site-stat-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.site-stat-header strong { display: block; font-size: 16px; }
+.site-stat-header code { display: inline-block; margin-top: 5px; color: #9da6b7; }
+.test-link { color: #aef1c3; text-decoration: none; border: 1px solid rgba(37,211,102,.22); background: rgba(37,211,102,.08); border-radius: 11px; padding: 9px 12px; font-weight: 800; white-space: nowrap; }
+.site-stat-numbers { display: flex; gap: 12px; margin-top: 14px; }
+.site-stat-numbers span { min-width: 86px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.045); }
+.site-stat-numbers small { display: block; color: #9299a8; }
+.site-stat-numbers strong { display: block; margin-top: 3px; font-size: 22px; }
+.site-last-click { margin: 12px 0 0; color: #9299a8; font-size: 13px; }
+.sites-list { max-height: 760px; overflow: auto; padding-right: 4px; }
+
+@media (max-width: 720px) {
+  .stats-heading { align-items: stretch; flex-direction: column; }
+  .stats-summary { grid-template-columns: 1fr; }
+  .site-stat-header { align-items: stretch; flex-direction: column; }
+  .test-link { text-align: center; }
+}
+
