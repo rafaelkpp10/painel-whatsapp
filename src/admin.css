@@ -7,7 +7,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(circle at 15% 10%, rgba(80, 67, 255, .24), transparent 34%), #07090f; }
-button, input, textarea { font: inherit; }
+button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
 .hidden { display: none !important; }
 
@@ -32,9 +32,10 @@ h2 { font-size: clamp(28px, 4vw, 42px); margin-bottom: 8px; }
 h3 { margin-bottom: 6px; }
 .muted, small, .section-heading p, .sites-heading p { color: #9299a8; }
 label { display: grid; gap: 9px; margin-top: 22px; color: #e9ebf1; font-weight: 700; }
-input, textarea { width: 100%; color: #fff; background: #0b0e16; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 14px 16px; outline: none; transition: border-color .2s, box-shadow .2s; }
+input, textarea, select { width: 100%; color: #fff; background: #0b0e16; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 14px 16px; outline: none; transition: border-color .2s, box-shadow .2s; }
+select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #aeb4c2 50%), linear-gradient(135deg, #aeb4c2 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: 42px; }
 textarea { resize: vertical; min-height: 112px; }
-input:focus, textarea:focus { border-color: #735cff; box-shadow: 0 0 0 4px rgba(115,92,255,.14); }
+input:focus, textarea:focus, select:focus { border-color: #735cff; box-shadow: 0 0 0 4px rgba(115,92,255,.14); }
 
 .primary-button, .secondary-button, .danger-button { border: 0; border-radius: 13px; padding: 13px 18px; font-weight: 800; }
 .primary-button { color: #fff; background: linear-gradient(135deg, #735cff, #5740f2); box-shadow: 0 14px 34px rgba(87,64,242,.28); }
@@ -54,7 +55,7 @@ input:focus, textarea:focus { border-color: #735cff; box-shadow: 0 0 0 4px rgba(
 .status-pill.saved { color: #73e39d; background: rgba(37,211,102,.1); }
 .sites-heading { margin-top: 34px; padding-top: 28px; border-top: 1px solid rgba(255,255,255,.08); }
 .sites-list { display: grid; gap: 14px; margin-top: 18px; }
-.site-row { display: grid; grid-template-columns: minmax(120px,.8fr) minmax(140px,1fr) minmax(220px,2fr) auto; gap: 12px; align-items: end; padding: 16px; border-radius: 16px; background: #0b0e16; border: 1px solid rgba(255,255,255,.07); }
+.site-row { display: grid; grid-template-columns: minmax(115px,.75fr) minmax(135px,.9fr) minmax(145px,.8fr) minmax(220px,1.7fr) auto; gap: 12px; align-items: end; padding: 16px; border-radius: 16px; background: #0b0e16; border: 1px solid rgba(255,255,255,.07); }
 .site-row label { margin: 0; font-size: 13px; }
 .site-row textarea { min-height: 72px; }
 .form-actions { margin-top: 26px; }
@@ -110,3 +111,26 @@ code { font-family: "SFMono-Regular", Consolas, monospace; }
   .test-link { text-align: center; }
 }
 
+.channel-config-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.channel-credential { padding: 16px; border-radius: 16px; background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.07); transition: border-color .2s, background .2s; }
+.channel-credential.needed { border-color: rgba(115,92,255,.48); background: rgba(115,92,255,.07); }
+.channel-credential.needed::before { content: "EM USO"; width: max-content; padding: 4px 8px; border-radius: 999px; color: #c8c0ff; background: rgba(115,92,255,.16); font-size: 10px; letter-spacing: .08em; font-weight: 900; }
+.channel-summary { margin-top: 14px; padding: 13px 15px; border-radius: 13px; color: #c8cdda; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.07); font-size: 13px; line-height: 1.5; }
+.site-stat-title-line { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.channel-badge { display: inline-flex; align-items: center; padding: 5px 8px; border-radius: 999px; font-size: 10px; letter-spacing: .05em; font-weight: 900; text-transform: uppercase; }
+.channel-badge.whatsapp { color: #8df0b1; background: rgba(37,211,102,.11); border: 1px solid rgba(37,211,102,.22); }
+.channel-badge.telegram { color: #8fd3ff; background: rgba(42,171,238,.11); border: 1px solid rgba(42,171,238,.22); }
+.test-link.telegram { color: #a8ddff; border-color: rgba(42,171,238,.24); background: rgba(42,171,238,.09); }
+
+@media (max-width: 860px) {
+  .channel-config-grid { grid-template-columns: 1fr; }
+  .site-row { grid-template-columns: 1fr 1fr; }
+  .site-row label:nth-child(4) { grid-column: 1 / -1; }
+  .site-row .danger-button { width: 100%; }
+}
+
+
+@media (max-width: 720px) {
+  .site-row { grid-template-columns: 1fr; }
+  .site-row label:nth-child(4) { grid-column: auto; }
+}

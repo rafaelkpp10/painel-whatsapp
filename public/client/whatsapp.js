@@ -3,7 +3,7 @@
 
   const script = document.currentScript;
   if (!script?.src) {
-    console.warn("[WhatsApp Central] Não foi possível localizar o script.");
+    console.warn("[Atendimento Central] Não foi possível localizar o script.");
     return;
   }
 
@@ -13,7 +13,7 @@
     .toLowerCase();
 
   if (!/^[a-z0-9_-]{2,40}$/.test(siteId)) {
-    console.warn("[WhatsApp Central] Identificador do site ausente ou inválido.");
+    console.warn("[Atendimento Central] Identificador do site ausente ou inválido.");
     return;
   }
 
@@ -22,14 +22,22 @@
     'a[href*="wa.me"]',
     'a[href*="wa.link"]',
     'a[href*="whatsapp.com"]',
+    'a[href*="t.me/"]',
+    'a[href*="telegram.me/"]',
+    `a[href*="${panelOrigin}/zap/"]`,
     "a.link-whatsapp",
-    "a[data-whatsapp]"
+    "a.link-telegram",
+    "a.link-contato",
+    "a[data-whatsapp]",
+    "a[data-telegram]",
+    "a[data-contact]"
   ].join(",");
 
   function isSupportedLink(element) {
     return (
       element instanceof HTMLAnchorElement &&
-      (element.dataset.whatsappConnected === "redirect" ||
+      (element.dataset.contactConnected === "redirect" ||
+        element.dataset.whatsappConnected === "redirect" ||
         element.matches(selector))
     );
   }
@@ -40,14 +48,15 @@
       panelOrigin
     );
 
-    // Ajuda o painel a identificar de qual domínio o clique veio.
     if (window.location.hostname) {
       redirectUrl.searchParams.set("source", window.location.hostname);
     }
 
-    // Continua suportando mensagens exclusivas em determinados botões.
     const customMessage = String(
-      link.dataset.whatsappMessage || ""
+      link.dataset.contactMessage ||
+      link.dataset.whatsappMessage ||
+      link.dataset.telegramMessage ||
+      ""
     ).trim();
 
     if (customMessage) {
@@ -62,19 +71,19 @@
 
     const redirectUrl = buildRedirectUrl(link);
 
-    if (!link.dataset.whatsappOriginalHref) {
-      link.dataset.whatsappOriginalHref =
-        link.getAttribute("href") || "";
+    if (!link.dataset.contactOriginalHref) {
+      link.dataset.contactOriginalHref = link.getAttribute("href") || "";
     }
 
     if (link.href !== redirectUrl) {
       link.href = redirectUrl;
     }
 
+    link.dataset.contactConnected = "redirect";
     link.dataset.whatsappConnected = "redirect";
     link.setAttribute(
       "aria-label",
-      link.getAttribute("aria-label") || "Abrir atendimento no WhatsApp"
+      link.getAttribute("aria-label") || "Abrir atendimento"
     );
   }
 
@@ -88,11 +97,8 @@
     }
   }
 
-  // Atualiza os links que já existem na página.
   connectAll();
 
-  // Garante o endereço correto no instante do clique, mesmo que algum
-  // construtor visual tenha recriado ou alterado o botão depois.
   document.addEventListener(
     "pointerdown",
     (event) => {
@@ -111,8 +117,6 @@
     true
   );
 
-  // Elementor e outros construtores podem inserir botões depois do
-  // carregamento. O observador conecta esses novos elementos.
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === "childList") {
@@ -138,7 +142,12 @@
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["href", "data-whatsapp-message"]
+      attributeFilter: [
+        "href",
+        "data-contact-message",
+        "data-whatsapp-message",
+        "data-telegram-message"
+      ]
     });
   };
 

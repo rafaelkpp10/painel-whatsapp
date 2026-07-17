@@ -60,6 +60,25 @@ function normalizeSiteId(value) {
     .slice(0, 40);
 }
 
+function normalizeTelegramInput(value) {
+  let normalized = String(value || "").trim();
+  if (!normalized) return "";
+
+  try {
+    if (/^https?:\/\//i.test(normalized)) {
+      const url = new URL(normalized);
+      normalized = url.pathname.split("/").filter(Boolean)[0] || "";
+    }
+  } catch {
+    return normalized;
+  }
+
+  return normalized
+    .replace(/^@+/, "")
+    .split(/[/?#]/)[0]
+    .trim();
+}
+
 function createField(labelText, element) {
   const label = document.createElement("label");
   label.append(document.createTextNode(labelText));
@@ -67,23 +86,49 @@ function createField(labelText, element) {
   return label;
 }
 
-function addSiteRow(site = { id: "", name: "", message: "" }) {
+function createChannelSelect(value = "default") {
+  const select = document.createElement("select");
+  select.className = "site-channel";
+
+  [
+    ["default", "Usar canal padrão"],
+    ["whatsapp", "WhatsApp"],
+    ["telegram", "Telegram"]
+  ].forEach(([optionValue, label]) => {
+    const option = document.createElement("option");
+    option.value = optionValue;
+    option.textContent = label;
+    select.append(option);
+  });
+
+  select.value = ["default", "whatsapp", "telegram"].includes(value)
+    ? value
+    : "default";
+  select.addEventListener("change", updateChannelRequirements);
+  return select;
+}
+
+function addSiteRow(
+  site = { id: "", name: "", channel: "default", message: "" }
+) {
   const row = document.createElement("div");
   row.className = "site-row";
 
   const idInput = document.createElement("input");
   idInput.className = "site-id";
   idInput.value = site.id || "";
-  idInput.placeholder = "playsim";
+  idInput.placeholder = "playsim1";
   idInput.maxLength = 40;
   idInput.required = true;
 
   const nameInput = document.createElement("input");
   nameInput.className = "site-name";
   nameInput.value = site.name || "";
-  nameInput.placeholder = "PlaySim";
+  nameInput.placeholder = "PlaySim 1";
   nameInput.maxLength = 80;
   nameInput.required = true;
+
+  const channelSelect = createChannelSelect(site.channel || "default");
 
   const messageInput = document.createElement("textarea");
   messageInput.className = "site-message";
@@ -108,42 +153,98 @@ function addSiteRow(site = { id: "", name: "", message: "" }) {
   removeButton.type = "button";
   removeButton.className = "danger-button";
   removeButton.textContent = "Remover";
-  removeButton.addEventListener("click", () => row.remove());
+  removeButton.addEventListener("click", () => {
+    row.remove();
+    updateChannelRequirements();
+  });
 
   row.append(
     createField("Identificador", idInput),
     createField("Nome", nameInput),
+    createField("Canal", channelSelect),
     createField("Mensagem", messageInput),
     removeButton
   );
 
   sitesList.append(row);
+  updateChannelRequirements();
+}
+
+function getUsedChannels() {
+  const channels = new Set([$("#defaultChannel").value]);
+
+  sitesList.querySelectorAll(".site-channel").forEach((select) => {
+    if (select.value !== "default") channels.add(select.value);
+  });
+
+  return channels;
+}
+
+function updateChannelRequirements() {
+  const channels = getUsedChannels();
+  const whatsappNeeded = channels.has("whatsapp");
+  const telegramNeeded = channels.has("telegram");
+
+  const numberInput = $("#whatsappNumber");
+  const telegramInput = $("#telegramUsername");
+  const whatsappField = $("#whatsappField");
+  const telegramField = $("#telegramField");
+
+  numberInput.required = whatsappNeeded;
+  telegramInput.required = telegramNeeded;
+  whatsappField.classList.toggle("needed", whatsappNeeded);
+  telegramField.classList.toggle("needed", telegramNeeded);
+
+  const summary = $("#channelRequirementSummary");
+  if (whatsappNeeded && telegramNeeded) {
+    summary.textContent =
+      "Você está usando os dois canais. Preencha o número do WhatsApp e o usuário do Telegram.";
+  } else if (telegramNeeded) {
+    summary.textContent =
+      "Modo Telegram ativo. O número do WhatsApp pode ficar vazio.";
+  } else {
+    summary.textContent =
+      "Modo WhatsApp ativo. O usuário do Telegram pode ficar vazio.";
+  }
 }
 
 function collectConfig() {
   const sites = [...sitesList.querySelectorAll(".site-row")].map((row) => ({
     id: row.querySelector(".site-id").value.trim(),
     name: row.querySelector(".site-name").value.trim(),
+    channel: row.querySelector(".site-channel").value,
     message: row.querySelector(".site-message").value.trim()
   }));
 
   return {
+    defaultChannel: $("#defaultChannel").value,
     number: $("#whatsappNumber").value.replace(/\D/g, ""),
+    telegramUsername: normalizeTelegramInput($("#telegramUsername").value),
     defaultMessage: $("#defaultMessage").value.trim(),
     sites
   };
 }
 
 function fillForm(config) {
+  $("#defaultChannel").value =
+    config.defaultChannel === "telegram" ? "telegram" : "whatsapp";
   $("#whatsappNumber").value = config.number || "";
+  $("#telegramUsername").value = config.telegramUsername || "";
   $("#defaultMessage").value = config.defaultMessage || "";
 
   sitesList.replaceChildren();
   (config.sites || []).forEach(addSiteRow);
 
   if (!(config.sites || []).length) {
-    addSiteRow({ id: "playsim", name: "PlaySim", message: "" });
+    addSiteRow({
+      id: "playsim",
+      name: "PlaySim",
+      channel: "default",
+      message: ""
+    });
   }
+
+  updateChannelRequirements();
 
   saveStatus.textContent = config.updatedAt
     ? `Atualizado ${new Date(config.updatedAt).toLocaleString("pt-BR")}`
@@ -168,7 +269,6 @@ async function loadConfig() {
   fillForm(await response.json());
 }
 
-
 function formatDateTime(value) {
   if (!value) return "Nenhum clique nos últimos 7 dias";
 
@@ -176,6 +276,10 @@ function formatDateTime(value) {
     dateStyle: "short",
     timeStyle: "short"
   });
+}
+
+function channelLabel(channel) {
+  return channel === "telegram" ? "Telegram" : "WhatsApp";
 }
 
 function createStatsCard(site) {
@@ -186,21 +290,30 @@ function createStatsCard(site) {
   header.className = "site-stat-header";
 
   const identity = document.createElement("div");
+  const titleLine = document.createElement("div");
+  titleLine.className = "site-stat-title-line";
+
   const title = document.createElement("strong");
   title.textContent = site.name || site.id;
+
+  const channel = site.channel === "telegram" ? "telegram" : "whatsapp";
+  const channelBadge = document.createElement("span");
+  channelBadge.className = `channel-badge ${channel}`;
+  channelBadge.textContent = channelLabel(channel);
+
+  titleLine.append(title, channelBadge);
 
   const id = document.createElement("code");
   id.textContent = site.id;
 
-  identity.append(title, id);
+  identity.append(titleLine, id);
 
   const testLink = document.createElement("a");
-  testLink.className = "test-link";
-  testLink.href =
-    `/zap/${encodeURIComponent(site.id)}?test=1`;
+  testLink.className = `test-link ${channel}`;
+  testLink.href = `/zap/${encodeURIComponent(site.id)}?test=1`;
   testLink.target = "_blank";
   testLink.rel = "noopener noreferrer";
-  testLink.textContent = "Testar botão";
+  testLink.textContent = `Testar ${channelLabel(channel)}`;
 
   header.append(identity, testLink);
 
@@ -219,26 +332,20 @@ function createStatsCard(site) {
 
   const last = document.createElement("p");
   last.className = "site-last-click";
-  last.textContent =
-    `Último clique: ${formatDateTime(site.lastClickAt)}`;
+  last.textContent = `Último clique: ${formatDateTime(site.lastClickAt)}`;
 
   card.append(header, numbers, last);
   return card;
 }
 
 function renderStats(stats) {
-  $("#todayClicks").textContent =
-    String(stats?.totals?.today || 0);
-  $("#periodClicks").textContent =
-    String(stats?.totals?.period || 0);
-  $("#registeredSites").textContent =
-    String(stats?.sites?.length || 0);
+  $("#todayClicks").textContent = String(stats?.totals?.today || 0);
+  $("#periodClicks").textContent = String(stats?.totals?.period || 0);
+  $("#registeredSites").textContent = String(stats?.sites?.length || 0);
 
   statsList.replaceChildren();
 
-  const sites = Array.isArray(stats?.sites)
-    ? stats.sites
-    : [];
+  const sites = Array.isArray(stats?.sites) ? stats.sites : [];
 
   if (!sites.length) {
     const empty = document.createElement("p");
@@ -294,6 +401,10 @@ async function loadStats() {
 }
 
 $("#refreshStatsButton").addEventListener("click", loadStats);
+$("#defaultChannel").addEventListener("change", updateChannelRequirements);
+$("#telegramUsername").addEventListener("blur", (event) => {
+  event.target.value = normalizeTelegramInput(event.target.value);
+});
 
 function openPasswordView(action) {
   pendingAuthAction = action;
@@ -341,7 +452,9 @@ passwordForm.addEventListener("submit", async (event) => {
   try {
     if (pendingAuthAction === "invite") {
       if (!pendingInviteToken) {
-        throw new Error("O código do convite não foi encontrado. Abra novamente o link do e-mail.");
+        throw new Error(
+          "O código do convite não foi encontrado. Abra novamente o link do e-mail."
+        );
       }
 
       await acceptInvite(pendingInviteToken, password);
@@ -355,11 +468,7 @@ passwordForm.addEventListener("submit", async (event) => {
     pendingAuthAction = null;
     cleanAuthTokenFromAddress();
 
-    setMessage(
-      passwordMessage,
-      "Senha salva. Abrindo o painel...",
-      true
-    );
+    setMessage(passwordMessage, "Senha salva. Abrindo o painel...", true);
 
     window.setTimeout(() => {
       window.location.replace("/admin/");
@@ -401,7 +510,9 @@ $("#logoutButton").addEventListener("click", async () => {
   window.location.reload();
 });
 
-$("#addSiteButton").addEventListener("click", () => addSiteRow());
+$("#addSiteButton").addEventListener("click", () => {
+  addSiteRow();
+});
 
 configForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -483,8 +594,9 @@ async function initialize() {
 
     $("#userInfo").textContent = `Conectado como ${user.email}`;
     $("#integrationCode").textContent =
+      `<a href="${window.location.origin}/zap/playsim1">Falar com atendimento</a>\n\n` +
       `<script src="${window.location.origin}/client/whatsapp.js" ` +
-      `data-site="playsim" defer><\/script>`;
+      `data-site="playsim1" defer><\/script>`;
 
     show(dashboardView);
     await loadConfig();

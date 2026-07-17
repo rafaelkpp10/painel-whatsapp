@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { resolveSiteChannel } from "./config-store.mjs";
 
 const CLICK_STORE_NAME = "whatsapp-click-events";
 const MAX_SOURCE_LENGTH = 120;
@@ -40,6 +41,7 @@ export async function recordClick({
   request,
   siteId,
   siteName,
+  channel,
   requestedSource
 }) {
   if (isLikelyBot(request)) return;
@@ -48,17 +50,14 @@ export async function recordClick({
   const day = now.toISOString().slice(0, 10);
   const timestamp = now.getTime();
   const id = crypto.randomUUID();
-  const source =
-    sanitizeSource(requestedSource) ||
-    sourceFromReferrer(request);
+  const source = sanitizeSource(requestedSource) || sourceFromReferrer(request);
 
-  // O dia vem primeiro para que o painel consiga consultar somente
-  // os últimos dias sem percorrer o histórico inteiro.
   const key = `${day}/${siteId}/${timestamp}-${id}`;
 
   await store().setJSON(key, {
     siteId,
     siteName: siteName || siteId,
+    channel: channel === "telegram" ? "telegram" : "whatsapp",
     clickedAt: now.toISOString(),
     source: source || null
   });
@@ -93,6 +92,7 @@ export async function readClickStats(config, days = 7) {
       {
         id: site.id,
         name: site.name,
+        channel: resolveSiteChannel(config, site),
         today: 0,
         period: 0,
         lastClickAt: null
@@ -117,6 +117,7 @@ export async function readClickStats(config, days = 7) {
         knownSites.set(siteId, {
           id: siteId,
           name: siteId,
+          channel: config.defaultChannel === "telegram" ? "telegram" : "whatsapp",
           today: 0,
           period: 0,
           lastClickAt: null
@@ -133,8 +134,7 @@ export async function readClickStats(config, days = 7) {
       const timestamp = timestampFromKey(blob.key);
       if (
         timestamp &&
-        (!siteStats.lastClickAt ||
-          timestamp > Date.parse(siteStats.lastClickAt))
+        (!siteStats.lastClickAt || timestamp > Date.parse(siteStats.lastClickAt))
       ) {
         siteStats.lastClickAt = new Date(timestamp).toISOString();
       }

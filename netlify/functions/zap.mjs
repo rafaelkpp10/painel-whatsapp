@@ -1,4 +1,7 @@
-import { readConfig } from "./lib/config-store.mjs";
+import {
+  readConfig,
+  resolveSiteChannel
+} from "./lib/config-store.mjs";
 import { recordClick } from "./lib/click-store.mjs";
 
 const ERROR_HEADERS = {
@@ -36,17 +39,35 @@ function errorPage(title, message, status = 500) {
   </main>
 </body>
 </html>`,
-    {
-      status,
-      headers: ERROR_HEADERS
-    }
+    { status, headers: ERROR_HEADERS }
   );
 }
 
 function normalizedSiteId(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase();
+  return String(value || "").trim().toLowerCase();
+}
+
+function buildDestination(channel, config, message) {
+  if (channel === "telegram") {
+    const username = String(config.telegramUsername || "").trim();
+    if (!/^[a-zA-Z0-9_]{5,32}$/.test(username)) {
+      throw new Error("TELEGRAM_NOT_CONFIGURED");
+    }
+
+    const destination = new URL(`https://t.me/${username}`);
+    const draftText = message.startsWith("@") ? ` ${message}` : message;
+    destination.searchParams.set("text", draftText);
+    return destination;
+  }
+
+  const number = String(config.number || "").replace(/\D/g, "");
+  if (!/^\d{10,15}$/.test(number)) {
+    throw new Error("WHATSAPP_NOT_CONFIGURED");
+  }
+
+  const destination = new URL(`https://wa.me/${number}`);
+  destination.searchParams.set("text", message);
+  return destination;
 }
 
 export default async (request, context) => {
@@ -60,8 +81,7 @@ export default async (request, context) => {
 
   const url = new URL(request.url);
   const siteId = normalizedSiteId(
-    context?.params?.site ||
-    url.searchParams.get("site")
+    context?.params?.site || url.searchParams.get("site")
   );
 
   if (!/^[a-z0-9_-]{2,40}$/.test(siteId)) {
@@ -73,34 +93,21 @@ export default async (request, context) => {
   }
 
   let config;
-
   try {
     config = await readConfig();
   } catch (error) {
-    console.error("[WhatsApp Redirect] Falha ao ler a configuração.", error);
+    console.error("[Atendimento Redirect] Falha ao ler a configuração.", error);
     return errorPage(
       "Atendimento temporariamente indisponível",
-      "Não foi possível consultar o número neste momento. Tente novamente em alguns segundos.",
+      "Não foi possível consultar o canal de atendimento neste momento. Tente novamente em alguns segundos.",
       503
     );
   }
 
-  const number = String(config.number || "").replace(/\D/g, "");
-  if (!/^\d{10,15}$/.test(number)) {
-    return errorPage(
-      "WhatsApp não configurado",
-      "O responsável pelo site ainda não configurou um número válido.",
-      503
-    );
-  }
+  const site = (config.sites || []).find((item) => item.id === siteId);
+  const channel = resolveSiteChannel(config, site);
 
-  const site = (config.sites || []).find(
-    (item) => item.id === siteId
-  );
-
-  const customMessage = String(
-    url.searchParams.get("text") || ""
-  )
+  const customMessage = String(url.searchParams.get("text") || "")
     .trim()
     .slice(0, 500);
 
@@ -110,8 +117,24 @@ export default async (request, context) => {
     config.defaultMessage ||
     "Olá! Vim pelo site e gostaria de mais informações.";
 
-  const destination = new URL(`https://wa.me/${number}`);
-  destination.searchParams.set("text", message);
+  let destination;
+  try {
+    destination = buildDestination(channel, config, message);
+  } catch (error) {
+    if (error.message === "TELEGRAM_NOT_CONFIGURED") {
+      return errorPage(
+        "Telegram não configurado",
+        "O responsável pelo site ainda não configurou um usuário válido do Telegram.",
+        503
+      );
+    }
+
+    return errorPage(
+      "WhatsApp não configurado",
+      "O responsável pelo site ainda não configurou um número válido do WhatsApp.",
+      503
+    );
+  }
 
   const isTest = url.searchParams.get("test") === "1";
 
@@ -120,10 +143,10 @@ export default async (request, context) => {
       request,
       siteId,
       siteName: site?.name || siteId,
+      channel,
       requestedSource: url.searchParams.get("source")
     }).catch((error) => {
-      // Uma falha na estatística nunca deve impedir o atendimento.
-      console.error("[WhatsApp Redirect] Falha ao registrar clique.", error);
+      console.error("[Atendimento Redirect] Falha ao registrar clique.", error);
     });
 
     if (typeof context?.waitUntil === "function") {

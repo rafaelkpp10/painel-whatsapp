@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
-  <title>Painel central do WhatsApp</title>
+  <title>Painel central de atendimento</title>
 </head>
 <body>
   <main class="page-shell">
@@ -98,9 +98,9 @@
           <div class="stats-heading">
             <div>
               <p class="eyebrow">DIAGNÓSTICO</p>
-              <h3>Cliques nos botões do WhatsApp</h3>
+              <h3>Cliques nos botões de atendimento</h3>
               <p>
-                Aqui você confirma se as pessoas estão clicando antes de chegar ao WhatsApp.
+                Aqui você confirma se as pessoas estão clicando antes de chegar ao canal escolhido.
               </p>
             </div>
             <button id="refreshStatsButton" class="secondary-button" type="button">
@@ -131,16 +131,35 @@
           <div class="section-heading">
             <div>
               <h3>Configuração principal</h3>
-              <p>Este número será usado por todos os sites conectados.</p>
+              <p>Escolha o canal padrão. Os sites podem seguir essa escolha ou usar outro canal.</p>
             </div>
             <span id="saveStatus" class="status-pill">Aguardando</span>
           </div>
 
           <label>
-            Número do WhatsApp
-            <input id="whatsappNumber" inputmode="numeric" autocomplete="off" required placeholder="5511999999999">
-            <small>Digite 55 + DDD + número, usando somente números.</small>
+            Canal padrão de atendimento
+            <select id="defaultChannel" required>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="telegram">Telegram</option>
+            </select>
+            <small>Ao trocar aqui, todos os sites configurados como “Usar canal padrão” mudam juntos.</small>
           </label>
+
+          <div class="channel-config-grid">
+            <label id="whatsappField" class="channel-credential">
+              Número do WhatsApp
+              <input id="whatsappNumber" inputmode="numeric" autocomplete="off" placeholder="5511999999999">
+              <small>Digite 55 + DDD + número, usando somente números.</small>
+            </label>
+
+            <label id="telegramField" class="channel-credential">
+              Usuário público do Telegram
+              <input id="telegramUsername" autocomplete="off" placeholder="seuusuario ou @seuusuario">
+              <small>Use o seu @usuário público. Não coloque link de grupo ou convite.</small>
+            </label>
+          </div>
+
+          <div id="channelRequirementSummary" class="channel-summary" role="status"></div>
 
           <label>
             Mensagem padrão
@@ -150,8 +169,8 @@
 
           <div class="sites-heading">
             <div>
-              <h3>Mensagens por site</h3>
-              <p>Cada site pode enviar uma frase diferente para o mesmo número.</p>
+              <h3>Configuração por site</h3>
+              <p>Cada site pode usar o canal padrão, WhatsApp ou Telegram, com mensagem própria.</p>
             </div>
             <button id="addSiteButton" class="secondary-button" type="button">Adicionar site</button>
           </div>
@@ -167,13 +186,11 @@
         <section class="card help-card">
           <h3>Instalação nos sites</h3>
           <p>
-            Os sites que já possuem este script <strong>não precisam ser alterados novamente</strong>.
-            O arquivo central agora troca os links para um redirecionamento seguro no momento do carregamento.
+            Os endereços <strong>/zap/identificador</strong> continuam iguais. Você não precisa editar novamente os sites para alternar entre WhatsApp e Telegram.
           </p>
           <pre><code id="integrationCode"></code></pre>
           <p class="muted">
-            Em sites novos, altere somente o valor de <strong>data-site</strong>.
-            O link antigo que já existe no botão permanece como segurança caso o JavaScript não carregue.
+            Para usar somente Telegram, selecione <strong>Telegram</strong> como canal padrão e deixe os sites em <strong>Usar canal padrão</strong>. O campo do WhatsApp poderá ficar vazio.
           </p>
         </section>
       </div>

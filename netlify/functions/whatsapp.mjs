@@ -1,4 +1,7 @@
-import { readConfig } from "./lib/config-store.mjs";
+import {
+  readConfig,
+  resolveSiteChannel
+} from "./lib/config-store.mjs";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -14,21 +17,40 @@ function json(data, status = 200) {
 }
 
 export default async (request) => {
-  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS_HEADERS });
-  if (request.method !== "GET") return json({ error: "Método não permitido." }, 405);
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+  if (request.method !== "GET") {
+    return json({ error: "Método não permitido." }, 405);
+  }
 
-  const siteId = new URL(request.url).searchParams.get("site")?.toLowerCase().trim() || "";
+  const siteId =
+    new URL(request.url).searchParams.get("site")?.toLowerCase().trim() || "";
   const config = await readConfig();
   const site = config.sites.find((item) => item.id === siteId);
+  const channel = resolveSiteChannel(config, site);
 
-  if (!config.number) {
+  if (channel === "telegram" && !config.telegramUsername) {
+    return json({ error: "O Telegram ainda não foi configurado." }, 503);
+  }
+
+  if (channel === "whatsapp" && !config.number) {
     return json({ error: "O número do WhatsApp ainda não foi configurado." }, 503);
   }
 
   return json({
-    number: config.number,
+    channel,
+    number: channel === "whatsapp" ? config.number : null,
+    telegramUsername:
+      channel === "telegram" ? config.telegramUsername : null,
     message: site?.message || config.defaultMessage,
-    site: site ? { id: site.id, name: site.name } : null,
+    site: site
+      ? { id: site.id, name: site.name, channel: site.channel || "default" }
+      : null,
     updatedAt: config.updatedAt
   });
+};
+
+export const config = {
+  path: "/api/whatsapp"
 };
