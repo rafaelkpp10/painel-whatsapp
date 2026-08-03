@@ -134,3 +134,68 @@ code { font-family: "SFMono-Regular", Consolas, monospace; }
   .site-row { grid-template-columns: 1fr; }
   .site-row label:nth-child(4) { grid-column: auto; }
 }
+
+
+/* Terceiro destino: site personalizado */
+.channel-config-grid {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.channel-badge.website {
+  color: #ffd49a;
+  background: rgba(255, 169, 64, .11);
+  border: 1px solid rgba(255, 169, 64, .24);
+}
+
+.test-link.website {
+  color: #ffd9a8;
+  border-color: rgba(255, 169, 64, .25);
+  background: rgba(255, 169, 64, .09);
+}
+
+.site-row {
+  grid-template-columns:
+    minmax(110px, .75fr)
+    minmax(140px, 1fr)
+    minmax(150px, .9fr)
+    auto;
+}
+
+.site-url-field {
+  grid-column: 1 / 3;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.02);
+  border: 1px solid transparent;
+}
+
+.site-message-field {
+  grid-column: 3 / 5;
+}
+
+.site-url-field.needed {
+  border-color: rgba(255, 169, 64, .38);
+  background: rgba(255, 169, 64, .055);
+}
+
+@media (max-width: 860px) {
+  .site-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .site-url-field,
+  .site-message-field {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .site-row {
+    grid-template-columns: 1fr;
+  }
+
+  .site-url-field,
+  .site-message-field {
+    grid-column: auto;
+  }
+}

@@ -57,7 +57,9 @@ export async function recordClick({
   await store().setJSON(key, {
     siteId,
     siteName: siteName || siteId,
-    channel: channel === "telegram" ? "telegram" : "whatsapp",
+    channel: ["telegram", "website"].includes(channel)
+      ? channel
+      : "whatsapp",
     clickedAt: now.toISOString(),
     source: source || null
   });
@@ -117,7 +119,9 @@ export async function readClickStats(config, days = 7) {
         knownSites.set(siteId, {
           id: siteId,
           name: siteId,
-          channel: config.defaultChannel === "telegram" ? "telegram" : "whatsapp",
+          channel: ["telegram", "website"].includes(config.defaultChannel)
+            ? config.defaultChannel
+            : "whatsapp",
           today: 0,
           period: 0,
           lastClickAt: null

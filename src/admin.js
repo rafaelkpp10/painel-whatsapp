@@ -79,6 +79,22 @@ function normalizeTelegramInput(value) {
     .trim();
 }
 
+
+function normalizeWebsiteInput(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  try {
+    const url = new URL(raw);
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return raw;
+    }
+    return url.href;
+  } catch {
+    return raw;
+  }
+}
+
 function createField(labelText, element) {
   const label = document.createElement("label");
   label.append(document.createTextNode(labelText));
@@ -93,7 +109,8 @@ function createChannelSelect(value = "default") {
   [
     ["default", "Usar canal padrão"],
     ["whatsapp", "WhatsApp"],
-    ["telegram", "Telegram"]
+    ["telegram", "Telegram"],
+    ["website", "Site personalizado"]
   ].forEach(([optionValue, label]) => {
     const option = document.createElement("option");
     option.value = optionValue;
@@ -101,7 +118,7 @@ function createChannelSelect(value = "default") {
     select.append(option);
   });
 
-  select.value = ["default", "whatsapp", "telegram"].includes(value)
+  select.value = ["default", "whatsapp", "telegram", "website"].includes(value)
     ? value
     : "default";
   select.addEventListener("change", updateChannelRequirements);
@@ -109,7 +126,13 @@ function createChannelSelect(value = "default") {
 }
 
 function addSiteRow(
-  site = { id: "", name: "", channel: "default", message: "" }
+  site = {
+    id: "",
+    name: "",
+    channel: "default",
+    websiteUrl: "",
+    message: ""
+  }
 ) {
   const row = document.createElement("div");
   row.className = "site-row";
@@ -129,6 +152,17 @@ function addSiteRow(
   nameInput.required = true;
 
   const channelSelect = createChannelSelect(site.channel || "default");
+
+  const websiteInput = document.createElement("input");
+  websiteInput.type = "url";
+  websiteInput.className = "site-website-url";
+  websiteInput.value = site.websiteUrl || "";
+  websiteInput.placeholder = "https://destino-especifico.com";
+  websiteInput.maxLength = 2048;
+
+  websiteInput.addEventListener("blur", () => {
+    websiteInput.value = normalizeWebsiteInput(websiteInput.value);
+  });
 
   const messageInput = document.createElement("textarea");
   messageInput.className = "site-message";
@@ -158,12 +192,25 @@ function addSiteRow(
     updateChannelRequirements();
   });
 
+  const idField = createField("Identificador", idInput);
+  const nameField = createField("Nome", nameInput);
+  const channelField = createField("Destino", channelSelect);
+  const websiteUrlField = createField(
+    "Link específico do site (opcional)",
+    websiteInput
+  );
+  websiteUrlField.className = "site-url-field";
+
+  const messageField = createField("Mensagem", messageInput);
+  messageField.className = "site-message-field";
+
   row.append(
-    createField("Identificador", idInput),
-    createField("Nome", nameInput),
-    createField("Canal", channelSelect),
-    createField("Mensagem", messageInput),
-    removeButton
+    idField,
+    nameField,
+    channelField,
+    removeButton,
+    websiteUrlField,
+    messageField
   );
 
   sitesList.append(row);
@@ -182,29 +229,51 @@ function getUsedChannels() {
 
 function updateChannelRequirements() {
   const channels = getUsedChannels();
+  const defaultChannel = $("#defaultChannel").value;
   const whatsappNeeded = channels.has("whatsapp");
   const telegramNeeded = channels.has("telegram");
+  const websiteNeeded = channels.has("website");
 
   const numberInput = $("#whatsappNumber");
   const telegramInput = $("#telegramUsername");
+  const websiteInput = $("#websiteUrl");
   const whatsappField = $("#whatsappField");
   const telegramField = $("#telegramField");
+  const websiteField = $("#websiteField");
 
   numberInput.required = whatsappNeeded;
   telegramInput.required = telegramNeeded;
+  websiteInput.required = defaultChannel === "website";
+
   whatsappField.classList.toggle("needed", whatsappNeeded);
   telegramField.classList.toggle("needed", telegramNeeded);
+  websiteField.classList.toggle("needed", websiteNeeded);
+
+  sitesList.querySelectorAll(".site-row").forEach((row) => {
+    const selected = row.querySelector(".site-channel")?.value || "default";
+    const resolved = selected === "default" ? defaultChannel : selected;
+    const field = row.querySelector(".site-url-field");
+    field?.classList.toggle("needed", resolved === "website");
+  });
+
+  const labels = [];
+  if (whatsappNeeded) labels.push("WhatsApp");
+  if (telegramNeeded) labels.push("Telegram");
+  if (websiteNeeded) labels.push("Site personalizado");
 
   const summary = $("#channelRequirementSummary");
-  if (whatsappNeeded && telegramNeeded) {
+  if (labels.length > 1) {
     summary.textContent =
-      "Você está usando os dois canais. Preencha o número do WhatsApp e o usuário do Telegram.";
+      `Destinos em uso: ${labels.join(", ")}. Preencha os dados correspondentes.`;
+  } else if (websiteNeeded) {
+    summary.textContent =
+      "Modo Site personalizado ativo. Informe o endereço padrão ou um link específico em cada cadastro.";
   } else if (telegramNeeded) {
     summary.textContent =
-      "Modo Telegram ativo. O número do WhatsApp pode ficar vazio.";
+      "Modo Telegram ativo. O número do WhatsApp e o endereço do site podem ficar vazios.";
   } else {
     summary.textContent =
-      "Modo WhatsApp ativo. O usuário do Telegram pode ficar vazio.";
+      "Modo WhatsApp ativo. Os campos de Telegram e site personalizado podem ficar vazios.";
   }
 }
 
@@ -213,6 +282,9 @@ function collectConfig() {
     id: row.querySelector(".site-id").value.trim(),
     name: row.querySelector(".site-name").value.trim(),
     channel: row.querySelector(".site-channel").value,
+    websiteUrl: normalizeWebsiteInput(
+      row.querySelector(".site-website-url").value
+    ),
     message: row.querySelector(".site-message").value.trim()
   }));
 
@@ -220,6 +292,7 @@ function collectConfig() {
     defaultChannel: $("#defaultChannel").value,
     number: $("#whatsappNumber").value.replace(/\D/g, ""),
     telegramUsername: normalizeTelegramInput($("#telegramUsername").value),
+    websiteUrl: normalizeWebsiteInput($("#websiteUrl").value),
     defaultMessage: $("#defaultMessage").value.trim(),
     sites
   };
@@ -227,9 +300,12 @@ function collectConfig() {
 
 function fillForm(config) {
   $("#defaultChannel").value =
-    config.defaultChannel === "telegram" ? "telegram" : "whatsapp";
+    ["whatsapp", "telegram", "website"].includes(config.defaultChannel)
+      ? config.defaultChannel
+      : "whatsapp";
   $("#whatsappNumber").value = config.number || "";
   $("#telegramUsername").value = config.telegramUsername || "";
+  $("#websiteUrl").value = config.websiteUrl || "";
   $("#defaultMessage").value = config.defaultMessage || "";
 
   sitesList.replaceChildren();
@@ -240,6 +316,7 @@ function fillForm(config) {
       id: "playsim",
       name: "PlaySim",
       channel: "default",
+      websiteUrl: "",
       message: ""
     });
   }
@@ -279,7 +356,9 @@ function formatDateTime(value) {
 }
 
 function channelLabel(channel) {
-  return channel === "telegram" ? "Telegram" : "WhatsApp";
+  if (channel === "telegram") return "Telegram";
+  if (channel === "website") return "Site";
+  return "WhatsApp";
 }
 
 function createStatsCard(site) {
@@ -296,7 +375,9 @@ function createStatsCard(site) {
   const title = document.createElement("strong");
   title.textContent = site.name || site.id;
 
-  const channel = site.channel === "telegram" ? "telegram" : "whatsapp";
+  const channel = ["telegram", "website"].includes(site.channel)
+    ? site.channel
+    : "whatsapp";
   const channelBadge = document.createElement("span");
   channelBadge.className = `channel-badge ${channel}`;
   channelBadge.textContent = channelLabel(channel);
@@ -404,6 +485,9 @@ $("#refreshStatsButton").addEventListener("click", loadStats);
 $("#defaultChannel").addEventListener("change", updateChannelRequirements);
 $("#telegramUsername").addEventListener("blur", (event) => {
   event.target.value = normalizeTelegramInput(event.target.value);
+});
+$("#websiteUrl").addEventListener("blur", (event) => {
+  event.target.value = normalizeWebsiteInput(event.target.value);
 });
 
 function openPasswordView(action) {

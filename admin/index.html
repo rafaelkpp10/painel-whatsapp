@@ -131,7 +131,7 @@
           <div class="section-heading">
             <div>
               <h3>Configuração principal</h3>
-              <p>Escolha o canal padrão. Os sites podem seguir essa escolha ou usar outro canal.</p>
+              <p>Escolha WhatsApp, Telegram ou um site personalizado. Cada cadastro pode seguir o padrão ou usar outro destino.</p>
             </div>
             <span id="saveStatus" class="status-pill">Aguardando</span>
           </div>
@@ -141,6 +141,7 @@
             <select id="defaultChannel" required>
               <option value="whatsapp">WhatsApp</option>
               <option value="telegram">Telegram</option>
+              <option value="website">Site personalizado</option>
             </select>
             <small>Ao trocar aqui, todos os sites configurados como “Usar canal padrão” mudam juntos.</small>
           </label>
@@ -157,6 +158,17 @@
               <input id="telegramUsername" autocomplete="off" placeholder="seuusuario ou @seuusuario">
               <small>Use o seu @usuário público. Não coloque link de grupo ou convite.</small>
             </label>
+
+            <label id="websiteField" class="channel-credential">
+              Endereço padrão do site
+              <input
+                id="websiteUrl"
+                type="url"
+                autocomplete="off"
+                placeholder="https://meusite.com/pagina"
+              >
+              <small>Use o endereço completo, começando com https:// ou http://.</small>
+            </label>
           </div>
 
           <div id="channelRequirementSummary" class="channel-summary" role="status"></div>
@@ -170,7 +182,7 @@
           <div class="sites-heading">
             <div>
               <h3>Configuração por site</h3>
-              <p>Cada site pode usar o canal padrão, WhatsApp ou Telegram, com mensagem própria.</p>
+              <p>Cada cadastro pode usar o padrão, WhatsApp, Telegram ou redirecionar para um site específico.</p>
             </div>
             <button id="addSiteButton" class="secondary-button" type="button">Adicionar site</button>
           </div>
@@ -186,11 +198,11 @@
         <section class="card help-card">
           <h3>Instalação nos sites</h3>
           <p>
-            Os endereços <strong>/zap/identificador</strong> continuam iguais. Você não precisa editar novamente os sites para alternar entre WhatsApp e Telegram.
+            Os endereços <strong>/zap/identificador</strong> continuam iguais. Você não precisa editar novamente os sites para alternar entre WhatsApp, Telegram e um endereço personalizado.
           </p>
           <pre><code id="integrationCode"></code></pre>
           <p class="muted">
-            Para usar somente Telegram, selecione <strong>Telegram</strong> como canal padrão e deixe os sites em <strong>Usar canal padrão</strong>. O campo do WhatsApp poderá ficar vazio.
+            Para enviar todos os botões a um site, selecione <strong>Site personalizado</strong> como destino padrão, informe o endereço e deixe os cadastros em <strong>Usar canal padrão</strong>.
           </p>
         </section>
       </div>

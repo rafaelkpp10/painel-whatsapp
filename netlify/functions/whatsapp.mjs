@@ -1,6 +1,7 @@
 import {
   readConfig,
-  resolveSiteChannel
+  resolveSiteChannel,
+  resolveSiteWebsiteUrl
 } from "./lib/config-store.mjs";
 
 const CORS_HEADERS = {
@@ -30,6 +31,13 @@ export default async (request) => {
   const site = config.sites.find((item) => item.id === siteId);
   const channel = resolveSiteChannel(config, site);
 
+  const websiteUrl =
+    channel === "website" ? resolveSiteWebsiteUrl(config, site) : "";
+
+  if (channel === "website" && !websiteUrl) {
+    return json({ error: "O endereço personalizado ainda não foi configurado." }, 503);
+  }
+
   if (channel === "telegram" && !config.telegramUsername) {
     return json({ error: "O Telegram ainda não foi configurado." }, 503);
   }
@@ -43,6 +51,7 @@ export default async (request) => {
     number: channel === "whatsapp" ? config.number : null,
     telegramUsername:
       channel === "telegram" ? config.telegramUsername : null,
+    websiteUrl: channel === "website" ? websiteUrl : null,
     message: site?.message || config.defaultMessage,
     site: site
       ? { id: site.id, name: site.name, channel: site.channel || "default" }

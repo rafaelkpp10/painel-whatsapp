@@ -28,8 +28,10 @@
     "a.link-whatsapp",
     "a.link-telegram",
     "a.link-contato",
+    "a.link-site",
     "a[data-whatsapp]",
     "a[data-telegram]",
+    "a[data-website]",
     "a[data-contact]"
   ].join(",");
 

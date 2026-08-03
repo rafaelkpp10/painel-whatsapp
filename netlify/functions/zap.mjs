@@ -1,6 +1,7 @@
 import {
   readConfig,
-  resolveSiteChannel
+  resolveSiteChannel,
+  resolveSiteWebsiteUrl
 } from "./lib/config-store.mjs";
 import { recordClick } from "./lib/click-store.mjs";
 
@@ -47,7 +48,15 @@ function normalizedSiteId(value) {
   return String(value || "").trim().toLowerCase();
 }
 
-function buildDestination(channel, config, message) {
+function buildDestination(channel, config, site, message) {
+  if (channel === "website") {
+    const websiteUrl = resolveSiteWebsiteUrl(config, site);
+    if (!websiteUrl) {
+      throw new Error("WEBSITE_NOT_CONFIGURED");
+    }
+    return new URL(websiteUrl);
+  }
+
   if (channel === "telegram") {
     const username = String(config.telegramUsername || "").trim();
     if (!/^[a-zA-Z0-9_]{5,32}$/.test(username)) {
@@ -119,8 +128,16 @@ export default async (request, context) => {
 
   let destination;
   try {
-    destination = buildDestination(channel, config, message);
+    destination = buildDestination(channel, config, site, message);
   } catch (error) {
+    if (error.message === "WEBSITE_NOT_CONFIGURED") {
+      return errorPage(
+        "Site não configurado",
+        "O responsável ainda não configurou um endereço válido para este botão.",
+        503
+      );
+    }
+
     if (error.message === "TELEGRAM_NOT_CONFIGURED") {
       return errorPage(
         "Telegram não configurado",
